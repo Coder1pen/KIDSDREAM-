@@ -19,14 +19,14 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:opacity-50 disabled:pointer-events-none';
+  const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-500 disabled:opacity-50 disabled:pointer-events-none transform hover:scale-105 active:scale-95';
   
   const variants = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800',
-    secondary: 'bg-secondary-500 text-white hover:bg-secondary-600 active:bg-secondary-700',
-    outline: 'border border-primary-200 bg-transparent hover:bg-primary-50 text-primary-700',
-    ghost: 'bg-transparent hover:bg-primary-50 text-primary-700',
-    link: 'bg-transparent underline-offset-4 hover:underline text-primary-700 p-0 h-auto',
+    primary: 'bg-gradient-to-r from-navy-600 to-navy-500 text-white hover:from-navy-500 hover:to-navy-400 shadow-glow hover:shadow-glow-lg',
+    secondary: 'bg-gradient-to-r from-dark-700 to-dark-600 text-white hover:from-dark-600 hover:to-dark-500 shadow-lg',
+    outline: 'border border-navy-600/50 bg-transparent hover:bg-navy-900/30 text-navy-300 hover:text-navy-200 hover:border-navy-500',
+    ghost: 'bg-transparent hover:bg-navy-900/30 text-navy-300 hover:text-navy-200',
+    link: 'bg-transparent underline-offset-4 hover:underline text-navy-300 hover:text-navy-200 p-0 h-auto transform-none hover:scale-100 active:scale-100',
   };
   
   const sizes = {

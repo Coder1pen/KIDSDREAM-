@@ -19,7 +19,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label 
             htmlFor={props.id} 
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-navy-200 mb-2"
           >
             {label}
           </label>
@@ -27,11 +27,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         <select
           ref={ref}
           className={`
-            w-full rounded-md border ${error ? 'border-error-500' : 'border-gray-300'} 
-            px-4 py-2 text-gray-900
-            focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500
-            disabled:opacity-50 disabled:bg-gray-50
-            appearance-none bg-white
+            w-full rounded-lg border ${error ? 'border-red-500' : 'border-navy-700/50'} 
+            bg-dark-800/50 backdrop-blur-sm px-4 py-3 text-navy-100
+            focus:border-navy-500 focus:outline-none focus:ring-2 focus:ring-navy-500/20
+            disabled:opacity-50 disabled:bg-dark-900/50
+            appearance-none transition-all duration-300
             ${className}
           `}
           aria-invalid={error ? 'true' : 'false'}
@@ -39,18 +39,18 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           {...props}
         >
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option key={option.value} value={option.value} className="bg-dark-800 text-navy-100">
               {option.label}
             </option>
           ))}
         </select>
         {helperText && !error && (
-          <p id={`${props.id}-helper`} className="mt-1 text-sm text-gray-500">
+          <p id={`${props.id}-helper`} className="mt-2 text-sm text-gray-400">
             {helperText}
           </p>
         )}
         {error && (
-          <p id={`${props.id}-error`} className="mt-1 text-sm text-error-500">
+          <p id={`${props.id}-error`} className="mt-2 text-sm text-red-400">
             {error}
           </p>
         )}
