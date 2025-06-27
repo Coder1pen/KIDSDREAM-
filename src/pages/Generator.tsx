@@ -23,7 +23,6 @@ export const Generator: React.FC = () => {
   
   const handleGenerateStory = async (prompt: StoryPrompt) => {
     if (!user) {
-      // If user is not logged in, redirect to sign in page
       navigate('/signin?redirect=generator');
       return;
     }
@@ -36,7 +35,9 @@ export const Generator: React.FC = () => {
     
     setIsGenerating(true);
     try {
-      await generateNewStory(prompt, user.id);
+      const isPremium = user.subscription_tier === 'premium';
+      await generateNewStory(prompt, user.id, isPremium);
+      
       // Update subscription status after generation
       if (user) {
         loadUserSubscription(user.id);
@@ -50,34 +51,64 @@ export const Generator: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-primary-900 mb-6 text-center">
-        Create a Magical Story
-      </h1>
-      
-      <p className="text-gray-600 mb-8 text-center max-w-2xl mx-auto">
-        Fill in the details below to generate a personalized story for your child. 
-        The more specific you are, the more magical the story will be!
-      </p>
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-navy-200 to-navy-100 bg-clip-text text-transparent mb-4">
+          Create a Magical Story
+        </h1>
+        <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+          Fill in the details below to generate a personalized story for your child. 
+          {user?.subscription_tier === 'premium' ? (
+            <span className="block mt-2 text-navy-300 font-semibold">
+              ✨ Premium stories are longer, more detailed, and crafted with advanced storytelling techniques!
+            </span>
+          ) : (
+            <span className="block mt-2 text-gray-400">
+              Upgrade to Premium for longer, more detailed stories with advanced features!
+            </span>
+          )}
+        </p>
+      </div>
       
       <div className="space-y-8">
-        <Card>
-          <CardContent className="p-6">
+        <Card hoverEffect>
+          <CardContent className="p-8">
             <StoryForm onSubmit={handleGenerateStory} isGenerating={isGenerating} />
           </CardContent>
         </Card>
         
         {isGenerating && (
-          <div className="flex flex-col items-center py-8">
-            <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
-            <p className="mt-4 text-gray-600">Creating your magical story...</p>
+          <div className="flex flex-col items-center py-12">
+            <div className="relative">
+              <div className="w-20 h-20 border-4 border-navy-800/30 border-t-navy-500 rounded-full animate-spin"></div>
+              <div className="absolute inset-0 w-20 h-20 border-4 border-transparent border-r-navy-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            </div>
+            <p className="mt-6 text-xl text-navy-200 font-medium">
+              {user?.subscription_tier === 'premium' 
+                ? 'Crafting your premium magical story...' 
+                : 'Creating your magical story...'
+              }
+            </p>
+            <p className="mt-2 text-gray-400">
+              {user?.subscription_tier === 'premium' 
+                ? 'Premium stories take a bit longer but are worth the wait!' 
+                : 'This may take a few moments'
+              }
+            </p>
           </div>
         )}
         
         {currentStory && !isGenerating && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold text-primary-900 mb-4">
-              Your Magical Story
-            </h2>
+          <div className="animate-fade-in">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-navy-200 to-navy-100 bg-clip-text text-transparent mb-2">
+                Your Magical Story
+              </h2>
+              {user?.subscription_tier === 'premium' && (
+                <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-navy-600/20 to-navy-500/20 rounded-full border border-navy-500/30">
+                  <span className="text-navy-300 font-medium">✨ Premium Story</span>
+                </div>
+              )}
+            </div>
             <StoryDisplay story={currentStory} />
           </div>
         )}

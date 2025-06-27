@@ -13,7 +13,7 @@ interface StoryState {
   currentStory: Story | null;
   isLoading: boolean;
   error: string | null;
-  generateNewStory: (prompt: StoryPrompt, userId: string) => Promise<Story | null>;
+  generateNewStory: (prompt: StoryPrompt, userId: string, isPremium?: boolean) => Promise<Story | null>;
   saveStory: (story: Omit<Story, 'id' | 'created_at'>) => Promise<void>;
   loadUserStories: (userId: string) => Promise<void>;
   updateStory: (id: string, updates: Partial<Story>) => Promise<void>;
@@ -27,11 +27,11 @@ export const useStoryStore = create<StoryState>((set, get) => ({
   isLoading: false,
   error: null,
   
-  generateNewStory: async (prompt, userId) => {
+  generateNewStory: async (prompt, userId, isPremium = false) => {
     set({ isLoading: true, error: null });
     try {
-      const content = await generateStory(prompt);
-      const title = generateStoryTitle(prompt);
+      const content = await generateStory(prompt, isPremium);
+      const title = generateStoryTitle(prompt, isPremium);
       
       const newStory: Omit<Story, 'id' | 'created_at'> = {
         title,
