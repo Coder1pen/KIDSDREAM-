@@ -9,6 +9,7 @@ import { Pricing } from './pages/Pricing';
 import { Profile } from './pages/Profile';
 import { SignIn } from './pages/auth/SignIn';
 import { SignUp } from './pages/auth/SignUp';
+import { PaymentSuccess } from './pages/PaymentSuccess';
 import { Developers } from './pages/Developers';
 import { useAuthStore } from './store/useAuthStore';
 
@@ -33,6 +34,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/developers" element={<Developers />} />
           </Routes>
         </main>

@@ -70,6 +70,8 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
       set({ isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
+      // Show user-friendly error message
+      alert('There was an error processing your request. Please try again or contact support.');
     }
   },
   
@@ -80,6 +82,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
       set({ isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
+      alert('There was an error accessing the customer portal. Please try again or contact support.');
     }
   }
 }));
