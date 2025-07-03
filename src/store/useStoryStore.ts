@@ -135,7 +135,6 @@ export const useStoryStore = create<StoryState>((set, get) => ({
   },
   
   updateStory: async (id, updates) => {
-    set({ isLoading: true, error: null });
     try {
       const { data, error } = await updateStoryInDb(id, updates);
       
@@ -148,27 +147,30 @@ export const useStoryStore = create<StoryState>((set, get) => ({
         currentStory: state.currentStory?.id === id 
           ? { ...state.currentStory, ...updates } 
           : state.currentStory,
-        isLoading: false
       }));
     } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
+      console.error('Error updating story:', error);
+      throw error;
     }
   },
   
   deleteStory: async (id) => {
-    set({ isLoading: true, error: null });
     try {
+      // First, delete from the database
       const { error } = await deleteStoryFromDb(id);
       
       if (error) throw new Error(error.message);
       
+      // Then update the local state to remove the story
       set(state => ({
         stories: state.stories.filter(story => story.id !== id),
         currentStory: state.currentStory?.id === id ? null : state.currentStory,
-        isLoading: false
       }));
+      
+      console.log(`Story ${id} deleted successfully`);
     } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
+      console.error('Error deleting story:', error);
+      throw error;
     }
   },
   

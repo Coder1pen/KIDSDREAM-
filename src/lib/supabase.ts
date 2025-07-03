@@ -82,10 +82,18 @@ export async function updateStory(id: string, updates: Partial<import('../types'
 }
 
 export async function deleteStory(id: string) {
+  console.log(`Attempting to delete story with ID: ${id}`);
+  
   const { error } = await supabase
     .from('stories')
     .delete()
     .eq('id', id);
+  
+  if (error) {
+    console.error('Supabase delete error:', error);
+  } else {
+    console.log(`Story ${id} deleted from database successfully`);
+  }
   
   return { error };
 }
