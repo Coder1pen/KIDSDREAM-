@@ -41,18 +41,29 @@ serve(async (req) => {
       });
     }
     
-    // Get current user profile
+    // Get current user profile - use maybeSingle() to handle cases where no profile exists
     const { data: profile, error: fetchError } = await supabase
       .from("profiles")
       .select("stories_remaining, subscription_tier")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
     
     if (fetchError) {
       return new Response(
         JSON.stringify({ error: `Error fetching profile: ${fetchError.message}` }),
         {
           status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    // If no profile found, return error as we cannot proceed without a valid profile
+    if (!profile) {
+      return new Response(
+        JSON.stringify({ error: "User profile not found" }),
+        {
+          status: 404,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );

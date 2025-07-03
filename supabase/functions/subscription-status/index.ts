@@ -42,18 +42,32 @@ serve(async (req) => {
       });
     }
     
-    // Get user profile
+    // Get user profile - use maybeSingle() to handle cases where no profile exists
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("subscription_tier, stories_remaining")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
     
     if (profileError) {
       return new Response(
         JSON.stringify({ error: `Error fetching user profile: ${profileError.message}` }),
         {
           status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
+    // If no profile found, return default free tier status
+    if (!profile) {
+      return new Response(
+        JSON.stringify({
+          tier: 'free',
+          storiesRemaining: 5,
+        }),
+        {
+          status: 200,
           headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
