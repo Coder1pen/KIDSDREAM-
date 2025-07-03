@@ -19,6 +19,7 @@ interface StoryState {
   updateStory: (id: string, updates: Partial<Story>) => Promise<void>;
   deleteStory: (id: string) => Promise<void>;
   setCurrentStory: (story: Story | null) => void;
+  decrementStoriesRemaining: (userId: string) => Promise<void>;
 }
 
 export const useStoryStore = create<StoryState>((set, get) => ({
@@ -50,6 +51,11 @@ export const useStoryStore = create<StoryState>((set, get) => ({
       if (!data || data.length === 0) throw new Error('Failed to save story');
       
       const savedStory = data[0] as Story;
+      
+      // Decrement stories remaining for free users
+      if (!isPremium) {
+        await get().decrementStoriesRemaining(userId);
+      }
       
       set(state => ({ 
         stories: [savedStory, ...state.stories],
@@ -136,5 +142,25 @@ export const useStoryStore = create<StoryState>((set, get) => ({
   
   setCurrentStory: (story) => {
     set({ currentStory: story });
+  },
+
+  decrementStoriesRemaining: async (userId) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/decrement-stories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update story count');
+      }
+    } catch (error) {
+      console.error('Error decrementing stories:', error);
+      // Don't throw here to avoid blocking story generation
+    }
   }
 }));

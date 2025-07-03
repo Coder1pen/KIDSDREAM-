@@ -42,6 +42,16 @@ export async function getUserProfile(userId: string) {
   return { data, error };
 }
 
+export async function updateUserProfile(userId: string, updates: any) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId)
+    .select();
+  
+  return { data, error };
+}
+
 export async function saveStory(story: Omit<import('../types').Story, 'id' | 'created_at'>) {
   const { data, error } = await supabase
     .from('stories')
@@ -87,4 +97,14 @@ export async function getSubscriptionTiers() {
     .order('price', { ascending: true });
   
   return { data, error };
+}
+
+export async function resetMonthlyStories() {
+  const { data, error } = await supabase.rpc('reset_monthly_stories');
+  return { data, error };
+}
+
+export async function getDaysUntilReset() {
+  const { data, error } = await supabase.rpc('get_days_until_reset');
+  return { data: data || 0, error };
 }

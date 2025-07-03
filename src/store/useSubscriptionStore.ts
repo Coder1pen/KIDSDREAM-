@@ -15,9 +15,10 @@ interface SubscriptionState {
   loadUserSubscription: (userId: string) => Promise<void>;
   subscribeToTier: (priceId: string, userId: string) => Promise<void>;
   manageSubscription: (customerId: string) => Promise<void>;
+  updateStoriesRemaining: (newCount: number) => void;
 }
 
-export const useSubscriptionStore = create<SubscriptionState>((set) => ({
+export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   tiers: [],
   userSubscription: {
     tier: 'free',
@@ -84,5 +85,14 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
       set({ error: (error as Error).message, isLoading: false });
       alert('There was an error accessing the customer portal. Please try again or contact support.');
     }
+  },
+
+  updateStoriesRemaining: (newCount) => {
+    set(state => ({
+      userSubscription: {
+        ...state.userSubscription,
+        storiesRemaining: newCount
+      }
+    }));
   }
 }));
