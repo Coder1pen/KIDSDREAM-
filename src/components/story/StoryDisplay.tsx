@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Heart, Share2, Download, BookOpen, Volume2, VolumeX } from 'lucide-react';
+import { Heart, Share2, Download, Volume2, VolumeX, BookOpen } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardFooter } from '../ui/Card';
 import { Story } from '../../types';
@@ -29,7 +29,7 @@ export const StoryDisplay: React.FC<StoryDisplayProps> = ({ story }) => {
     if (navigator.share) {
       navigator.share({
         title: story.title,
-        text: `Check out this story: ${story.title}`,
+        text: `Check out this magical story: ${story.title}`,
         url: window.location.href,
       });
     } else {
@@ -81,30 +81,70 @@ export const StoryDisplay: React.FC<StoryDisplayProps> = ({ story }) => {
     }
   };
 
+  // Format the date nicely
+  const formattedDate = new Date(story.created_at).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
   return (
-    <Card className="animate-pulse-slow">
-      <CardContent className="p-6">
-        <h2 className="text-2xl font-bold text-primary-900 mb-4">{story.title}</h2>
+    <Card className="bg-dark-900/50 backdrop-blur-sm border-navy-800/30 shadow-glow">
+      <CardContent className="p-8">
+        {/* Story Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            <span className="bg-gradient-to-r from-navy-200 to-navy-100 bg-clip-text text-transparent">
+              {story.title}
+            </span>
+          </h1>
+          
+          {/* Story Metadata */}
+          <div className="flex flex-wrap justify-center gap-3 mb-4">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-navy-900/50 text-navy-300 border border-navy-700/50">
+              📖 {story.theme.charAt(0).toUpperCase() + story.theme.slice(1)}
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-navy-900/50 text-navy-300 border border-navy-700/50">
+              👶 {story.age_group} years
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-navy-900/50 text-navy-300 border border-navy-700/50">
+              🏰 {story.setting}
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-navy-900/50 text-navy-300 border border-navy-700/50">
+              ⭐ {story.main_character}
+            </span>
+          </div>
+          
+          <p className="text-sm text-gray-400">
+            Created on {formattedDate}
+          </p>
+        </div>
         
-        <div className="prose max-w-none">
-          {story.content.split('\n\n').map((paragraph, index) => (
-            <p key={index} className="mb-4 text-gray-700 leading-relaxed">
-              {paragraph}
-            </p>
-          ))}
+        {/* Story Content */}
+        <div className="bg-dark-800/30 rounded-xl p-6 md:p-8 border border-navy-800/20">
+          <div className="prose prose-lg max-w-none text-gray-200 leading-relaxed">
+            {story.content.split('\n\n').map((paragraph, index) => (
+              <p key={index} className="mb-6 text-gray-200 leading-relaxed text-lg">
+                {paragraph}
+              </p>
+            ))}
+          </div>
         </div>
       </CardContent>
       
-      <CardFooter className="flex flex-wrap items-center justify-between gap-2 p-4 bg-gray-50">
-        <div className="flex items-center space-x-2">
+      <CardFooter className="flex flex-wrap items-center justify-between gap-4 p-6 bg-dark-950/30 border-t border-navy-800/30">
+        <div className="flex items-center space-x-3">
           <Button
             variant="ghost"
             size="sm"
-            leftIcon={<Heart className={`h-4 w-4 ${isFavorite ? 'fill-error-500 text-error-500' : ''}`} />}
+            leftIcon={<Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />}
             onClick={toggleFavorite}
+            className={`${isFavorite ? 'text-red-500 hover:text-red-400' : 'text-gray-400 hover:text-navy-300'}`}
             aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
           >
-            {isFavorite ? 'Favorite' : 'Favorite'}
+            {isFavorite ? 'Favorited' : 'Favorite'}
           </Button>
           
           <Button
@@ -112,18 +152,20 @@ export const StoryDisplay: React.FC<StoryDisplayProps> = ({ story }) => {
             size="sm"
             leftIcon={isReading ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             onClick={toggleReading}
+            className={`${isReading ? 'text-navy-400' : 'text-gray-400 hover:text-navy-300'}`}
             aria-label={isReading ? 'Stop reading' : 'Read aloud'}
           >
             {isReading ? 'Stop Reading' : 'Read Aloud'}
           </Button>
         </div>
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           <Button
             variant="outline"
             size="sm"
             leftIcon={<Share2 className="h-4 w-4" />}
             onClick={shareStory}
+            className="border-navy-700/50 hover:bg-navy-900/30 text-gray-300 hover:text-navy-200"
             aria-label="Share story"
           >
             Share
@@ -134,6 +176,7 @@ export const StoryDisplay: React.FC<StoryDisplayProps> = ({ story }) => {
             size="sm"
             leftIcon={<Download className="h-4 w-4" />}
             onClick={downloadStory}
+            className="border-navy-700/50 hover:bg-navy-900/30 text-gray-300 hover:text-navy-200"
             aria-label="Download story"
           >
             Download

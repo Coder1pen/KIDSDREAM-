@@ -45,13 +45,13 @@ export const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, isGenerating }) 
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input
           id="main-character"
           name="main_character"
           label="Main Character"
-          placeholder="e.g., Lily the Unicorn, Tommy the Robot"
+          placeholder="e.g., Lily the Unicorn, Tommy the Robot, Princess Maya"
           value={prompt.main_character}
           onChange={handleChange}
           required
@@ -75,7 +75,7 @@ export const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, isGenerating }) 
         id="setting"
         name="setting"
         label="Story Setting"
-        placeholder="e.g., Enchanted Forest, Space Station, Underwater Kingdom"
+        placeholder="e.g., Enchanted Forest, Space Station, Underwater Kingdom, Magical School"
         value={prompt.setting}
         onChange={handleChange}
         required
@@ -88,13 +88,26 @@ export const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, isGenerating }) 
         value={prompt.theme}
         onChange={handleChange}
         options={[
-          { value: 'adventure', label: 'Adventure' },
-          { value: 'friendship', label: 'Friendship' },
-          { value: 'magic', label: 'Magic & Fantasy' },
-          { value: 'learning', label: 'Learning & Growing' },
-          { value: 'animals', label: 'Animals' },
-          { value: 'family', label: 'Family' },
-          { value: 'bedtime', label: 'Bedtime Story' },
+          { value: 'adventure', label: '🗺️ Adventure & Exploration' },
+          { value: 'friendship', label: '🤝 Friendship & Kindness' },
+          { value: 'magic', label: '✨ Magic & Fantasy' },
+          { value: 'learning', label: '📚 Learning & Discovery' },
+          { value: 'animals', label: '🐾 Animals & Nature' },
+          { value: 'family', label: '👨‍👩‍👧‍👦 Family & Love' },
+          { value: 'bedtime', label: '🌙 Bedtime & Dreams' },
+          { value: 'courage', label: '🦁 Courage & Bravery' },
+          { value: 'creativity', label: '🎨 Creativity & Art' },
+          { value: 'science', label: '🔬 Science & Innovation' },
+          { value: 'mystery', label: '🔍 Mystery & Detective' },
+          { value: 'sports', label: '⚽ Sports & Competition' },
+          { value: 'music', label: '🎵 Music & Dance' },
+          { value: 'cooking', label: '👨‍🍳 Cooking & Food' },
+          { value: 'travel', label: '✈️ Travel & Culture' },
+          { value: 'superhero', label: '🦸‍♀️ Superhero & Powers' },
+          { value: 'pirates', label: '🏴‍☠️ Pirates & Treasure' },
+          { value: 'dinosaurs', label: '🦕 Dinosaurs & Prehistoric' },
+          { value: 'space', label: '🚀 Space & Aliens' },
+          { value: 'underwater', label: '🌊 Underwater & Mermaids' },
         ]}
       />
       
@@ -102,39 +115,55 @@ export const StoryForm: React.FC<StoryFormProps> = ({ onSubmit, isGenerating }) 
         id="additional-details"
         name="additional_details"
         label="Additional Details (Optional)"
-        placeholder="Any specific elements you'd like in the story? E.g., includes a talking cat, teaches about sharing..."
+        placeholder="Any specific elements you'd like in the story? E.g., includes a talking cat, teaches about sharing, has a rainbow bridge..."
         value={prompt.additional_details}
         onChange={handleChange}
         rows={3}
       />
       
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center space-y-4">
         <Button
           type="submit"
-          className="w-full md:w-auto px-8"
+          className="w-full md:w-auto px-8 py-4 text-lg"
           disabled={isGenerating || !hasRemainingStories}
           isLoading={isGenerating}
-          leftIcon={<Sparkles className="h-4 w-4" />}
+          leftIcon={<Sparkles className="h-5 w-5" />}
         >
           {isGenerating ? 'Creating Magic...' : 'Generate Story'}
         </Button>
         
         {user ? (
-          <p className="mt-2 text-sm text-gray-500">
-            {user.subscription_tier === 'premium' 
-              ? 'Premium subscription: Unlimited stories' 
-              : `Stories remaining this month: ${userSubscription.storiesRemaining}`
-            }
-          </p>
+          <div className="text-center">
+            <p className="text-sm text-gray-400">
+              {user.subscription_tier === 'premium' ? (
+                <span className="text-navy-300 font-semibold">
+                  ✨ Premium subscription: Unlimited stories with enhanced features
+                </span>
+              ) : (
+                <span>
+                  Stories remaining this month: <span className="font-semibold text-navy-300">{userSubscription.storiesRemaining}</span>
+                </span>
+              )}
+            </p>
+          </div>
         ) : (
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="text-sm text-gray-400 text-center">
             Sign in to save and generate more stories
           </p>
         )}
         
         {user && userSubscription.storiesRemaining === 0 && user.subscription_tier !== 'premium' && (
-          <div className="mt-4 p-3 bg-accent-50 text-accent-800 rounded-md text-sm">
-            You've used all your free stories this month. <a href="/pricing" className="font-medium underline">Upgrade to Premium</a> for unlimited stories!
+          <div className="mt-4 p-4 bg-navy-900/30 border border-navy-700/50 rounded-lg text-center max-w-md">
+            <p className="text-navy-300 text-sm mb-3">
+              You've used all your free stories this month!
+            </p>
+            <Button
+              onClick={() => window.location.href = '/pricing'}
+              size="sm"
+              className="bg-gradient-to-r from-navy-600 to-navy-500 hover:from-navy-500 hover:to-navy-400"
+            >
+              Upgrade to Premium
+            </Button>
           </div>
         )}
       </div>
