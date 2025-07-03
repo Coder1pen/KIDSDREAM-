@@ -1,41 +1,56 @@
 import { loadStripe } from '@stripe/stripe-js';
+import { supabase } from './supabase';
 
 // Initialize Stripe with your publishable key
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
-export async function createCheckoutSession(priceId: string, userId: string) {
+export async function createCheckoutSession(priceId: string, mode: 'payment' | 'subscription' = 'subscription') {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`, {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session?.access_token) {
+      throw new Error('User not authenticated');
+    }
+
+    const baseUrl = window.location.origin;
+    const successUrl = `${baseUrl}/payment-success`;
+    const cancelUrl = `${baseUrl}/pricing`;
+
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        priceId,
-        userId,
+        price_id: priceId,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        mode,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create checkout session');
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to create checkout session');
     }
 
-    const session = await response.json();
+    const { sessionId, url } = await response.json();
     
-    // Redirect to Stripe Checkout
-    const stripe = await stripePromise;
-    if (!stripe) {
-      throw new Error('Stripe failed to load');
-    }
+    if (url) {
+      // Redirect directly to Stripe Checkout
+      window.location.href = url;
+    } else {
+      // Fallback: redirect using Stripe.js
+      const stripe = await stripePromise;
+      if (!stripe) {
+        throw new Error('Stripe failed to load');
+      }
 
-    const { error } = await stripe.redirectToCheckout({
-      sessionId: session.id,
-    });
-
-    if (error) {
-      console.error('Error redirecting to checkout:', error);
-      throw error;
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+      if (error) {
+        throw error;
+      }
     }
   } catch (error) {
     console.error('Error creating checkout session:', error);
@@ -43,52 +58,40 @@ export async function createCheckoutSession(priceId: string, userId: string) {
   }
 }
 
-export async function createPortalSession(customerId: string) {
+export async function getSubscriptionStatus() {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-portal-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        customerId,
-      }),
-    });
+    const { data, error } = await supabase
+      .from('stripe_user_subscriptions')
+      .select('*')
+      .maybeSingle();
 
-    if (!response.ok) {
-      throw new Error('Failed to create portal session');
+    if (error) {
+      console.error('Error fetching subscription status:', error);
+      return null;
     }
 
-    const session = await response.json();
-    
-    // Redirect to Stripe Customer Portal
-    window.location.href = session.url;
+    return data;
   } catch (error) {
-    console.error('Error creating portal session:', error);
-    throw error;
+    console.error('Error getting subscription status:', error);
+    return null;
   }
 }
 
-export async function getSubscriptionStatus(userId: string) {
+export async function getUserOrders() {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/subscription-status?userId=${userId}`, {
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-    });
+    const { data, error } = await supabase
+      .from('stripe_user_orders')
+      .select('*')
+      .order('order_date', { ascending: false });
 
-    if (!response.ok) {
-      throw new Error('Failed to get subscription status');
+    if (error) {
+      console.error('Error fetching user orders:', error);
+      return [];
     }
 
-    return await response.json();
+    return data || [];
   } catch (error) {
-    console.error('Error getting subscription status:', error);
-    // Return default values on error
-    return {
-      tier: 'free',
-      storiesRemaining: 5
-    };
+    console.error('Error getting user orders:', error);
+    return [];
   }
 }

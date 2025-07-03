@@ -1,20 +1,21 @@
 import { create } from 'zustand';
 import { SubscriptionTier } from '../types';
 import { getSubscriptionTiers } from '../lib/supabase';
-import { createCheckoutSession, createPortalSession, getSubscriptionStatus } from '../lib/stripe';
+import { createCheckoutSession, getSubscriptionStatus } from '../lib/stripe';
 
 interface SubscriptionState {
   tiers: SubscriptionTier[];
   userSubscription: {
     tier: 'free' | 'premium';
     storiesRemaining: number;
+    subscriptionStatus?: string;
+    currentPeriodEnd?: number;
   };
   isLoading: boolean;
   error: string | null;
   loadSubscriptionTiers: () => Promise<void>;
   loadUserSubscription: (userId: string) => Promise<void>;
-  subscribeToTier: (priceId: string, userId: string) => Promise<void>;
-  manageSubscription: (customerId: string) => Promise<void>;
+  subscribeToTier: (priceId: string, mode?: 'payment' | 'subscription') => Promise<void>;
   updateStoriesRemaining: (newCount: number) => void;
 }
 
@@ -40,15 +41,36 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
     }
   },
   
-  loadUserSubscription: async (userId) => {
+  loadUserSubscription: async (userId: string) => {
     set({ isLoading: true, error: null });
     try {
-      const subscription = await getSubscriptionStatus(userId);
+      // First try to get Stripe subscription status
+      const stripeSubscription = await getSubscriptionStatus();
       
+      // Fallback to the original API for stories remaining
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/subscription-status?userId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+      });
+
+      let fallbackData = { tier: 'free', storiesRemaining: 5 };
+      if (response.ok) {
+        fallbackData = await response.json();
+      }
+
+      // Determine subscription tier based on Stripe data
+      let tier: 'free' | 'premium' = 'free';
+      if (stripeSubscription?.subscription_status === 'active') {
+        tier = 'premium';
+      }
+
       set({ 
         userSubscription: {
-          tier: subscription.tier || 'free',
-          storiesRemaining: subscription.storiesRemaining || 5
+          tier,
+          storiesRemaining: tier === 'premium' ? -1 : fallbackData.storiesRemaining,
+          subscriptionStatus: stripeSubscription?.subscription_status,
+          currentPeriodEnd: stripeSubscription?.current_period_end,
         },
         isLoading: false 
       });
@@ -64,26 +86,15 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
     }
   },
   
-  subscribeToTier: async (priceId, userId) => {
+  subscribeToTier: async (priceId, mode = 'subscription') => {
     set({ isLoading: true, error: null });
     try {
-      await createCheckoutSession(priceId, userId);
+      await createCheckoutSession(priceId, mode);
       set({ isLoading: false });
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
       // Show user-friendly error message
       alert('There was an error processing your request. Please try again or contact support.');
-    }
-  },
-  
-  manageSubscription: async (customerId) => {
-    set({ isLoading: true, error: null });
-    try {
-      await createPortalSession(customerId);
-      set({ isLoading: false });
-    } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
-      alert('There was an error accessing the customer portal. Please try again or contact support.');
     }
   },
 

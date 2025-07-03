@@ -1,28 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Check, Star, Crown, Sparkles } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { SubscriptionTier } from '../../types';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useSubscriptionStore } from '../../store/useSubscriptionStore';
+import { createCheckoutSession } from '../../lib/stripe';
+import { products } from '../../stripe-config';
 
 interface PricingCardProps {
-  tier: SubscriptionTier;
+  tier: {
+    id: string;
+    name: string;
+    price: number;
+    features: string[];
+    stories_per_month: number;
+    is_premium: boolean;
+  };
 }
 
 export const PricingCard: React.FC<PricingCardProps> = ({ tier }) => {
   const { user } = useAuthStore();
-  const { subscribeToTier, userSubscription } = useSubscriptionStore();
+  const [isLoading, setIsLoading] = useState(false);
   
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
     if (!user) {
       window.location.href = '/signin?redirect=pricing';
       return;
     }
     
     if (tier.is_premium) {
-      // For premium tier, initiate Stripe checkout
-      subscribeToTier('price_premium_monthly', user.id);
+      setIsLoading(true);
+      try {
+        // Find the corresponding product in stripe-config
+        const product = products.find(p => p.name === tier.name);
+        if (product) {
+          await createCheckoutSession(product.priceId, product.mode);
+        } else {
+          throw new Error('Product configuration not found');
+        }
+      } catch (error) {
+        console.error('Error creating checkout session:', error);
+        alert('Failed to start checkout process. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
   
@@ -105,14 +125,15 @@ export const PricingCard: React.FC<PricingCardProps> = ({ tier }) => {
               : 'bg-dark-700 hover:bg-dark-600'
           }`}
           variant={tier.is_premium ? 'primary' : 'secondary'}
-          disabled={isCurrentPlan}
+          disabled={isCurrentPlan || isLoading}
           onClick={handleSubscribe}
+          isLoading={isLoading}
           leftIcon={tier.is_premium ? <Crown className="h-4 w-4" /> : undefined}
         >
           {isCurrentPlan 
             ? 'Current Plan' 
             : tier.is_premium 
-              ? 'Upgrade to Premium' 
+              ? (isLoading ? 'Processing...' : 'Upgrade to Premium')
               : 'Get Started Free'
           }
         </Button>

@@ -1,22 +1,55 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CheckCircle, Sparkles, Crown } from 'lucide-react';
+import { CheckCircle, Sparkles, Crown, Loader } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { useAuthStore } from '../store/useAuthStore';
+import { useSubscriptionStore } from '../store/useSubscriptionStore';
 
 export const PaymentSuccess: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, loadUser } = useAuthStore();
+  const { loadUserSubscription } = useSubscriptionStore();
+  const [isLoading, setIsLoading] = useState(true);
   const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
-    // Reload user data to get updated subscription status
-    if (user) {
-      loadUser();
-    }
-  }, [user, loadUser]);
+    const refreshUserData = async () => {
+      if (user) {
+        try {
+          // Wait a moment for webhook processing
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Reload user data to get updated subscription status
+          await loadUser();
+          await loadUserSubscription(user.id);
+        } catch (error) {
+          console.error('Error refreshing user data:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    refreshUserData();
+  }, [user, loadUser, loadUserSubscription]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-dark-950 text-white min-h-screen">
+        <div className="relative flex flex-col items-center justify-center py-16">
+          <div className="relative mb-6">
+            <div className="w-16 h-16 border-4 border-navy-800/30 border-t-navy-500 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-navy-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+          </div>
+          <p className="text-xl text-navy-200">Processing your subscription...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-dark-950 text-white min-h-screen">
