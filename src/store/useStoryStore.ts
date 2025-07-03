@@ -11,10 +11,12 @@ import { generateStory, generateStoryTitle } from '../lib/storyGenerator';
 interface StoryState {
   stories: Story[];
   currentStory: Story | null;
+  isCurrentStorySaved: boolean;
   isLoading: boolean;
   error: string | null;
   generateNewStory: (prompt: StoryPrompt, userId: string, isPremium?: boolean) => Promise<Story | null>;
   saveStory: (story: Omit<Story, 'id' | 'created_at'>) => Promise<void>;
+  saveStoryToLibrary: (story: Story, userId: string) => Promise<void>;
   loadUserStories: (userId: string) => Promise<void>;
   updateStory: (id: string, updates: Partial<Story>) => Promise<void>;
   deleteStory: (id: string) => Promise<void>;
@@ -25,6 +27,7 @@ interface StoryState {
 export const useStoryStore = create<StoryState>((set, get) => ({
   stories: [],
   currentStory: null,
+  isCurrentStorySaved: false,
   isLoading: false,
   error: null,
   
@@ -34,7 +37,9 @@ export const useStoryStore = create<StoryState>((set, get) => ({
       const content = await generateStory(prompt, isPremium);
       const title = generateStoryTitle(prompt, isPremium);
       
-      const newStory: Omit<Story, 'id' | 'created_at'> = {
+      // Create a temporary story object for display
+      const tempStory: Story = {
+        id: `temp-${Date.now()}`, // Temporary ID
         title,
         content,
         user_id: userId,
@@ -42,31 +47,58 @@ export const useStoryStore = create<StoryState>((set, get) => ({
         theme: prompt.theme,
         age_group: prompt.age_group,
         main_character: prompt.main_character,
-        setting: prompt.setting
+        setting: prompt.setting,
+        created_at: new Date().toISOString()
       };
-      
-      const { data, error } = await saveStoryToDb(newStory);
-      
-      if (error) throw new Error(error.message);
-      if (!data || data.length === 0) throw new Error('Failed to save story');
-      
-      const savedStory = data[0] as Story;
       
       // Decrement stories remaining for free users
       if (!isPremium) {
         await get().decrementStoriesRemaining(userId);
       }
       
-      set(state => ({ 
-        stories: [savedStory, ...state.stories],
-        currentStory: savedStory,
+      set({ 
+        currentStory: tempStory,
+        isCurrentStorySaved: false,
         isLoading: false
-      }));
+      });
       
-      return savedStory;
+      return tempStory;
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
       return null;
+    }
+  },
+
+  saveStoryToLibrary: async (story, userId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const storyToSave: Omit<Story, 'id' | 'created_at'> = {
+        title: story.title,
+        content: story.content,
+        user_id: userId,
+        is_favorite: story.is_favorite,
+        theme: story.theme,
+        age_group: story.age_group,
+        main_character: story.main_character,
+        setting: story.setting
+      };
+
+      const { data, error } = await saveStoryToDb(storyToSave);
+      
+      if (error) throw new Error(error.message);
+      if (!data || data.length === 0) throw new Error('Failed to save story');
+      
+      const savedStory = data[0] as Story;
+      
+      set(state => ({ 
+        stories: [savedStory, ...state.stories],
+        currentStory: savedStory,
+        isCurrentStorySaved: true,
+        isLoading: false
+      }));
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false });
+      throw error;
     }
   },
   
@@ -141,7 +173,10 @@ export const useStoryStore = create<StoryState>((set, get) => ({
   },
   
   setCurrentStory: (story) => {
-    set({ currentStory: story });
+    set({ 
+      currentStory: story,
+      isCurrentStorySaved: story ? !story.id.startsWith('temp-') : false
+    });
   },
 
   decrementStoriesRemaining: async (userId) => {

@@ -1,18 +1,23 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Heart, Share2, Download, Volume2, VolumeX, BookOpen } from 'lucide-react';
+import { Heart, Share2, Download, Volume2, VolumeX, BookOpen, Save, Check } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardFooter } from '../ui/Card';
 import { Story } from '../../types';
 import { useStoryStore } from '../../store/useStoryStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 interface StoryDisplayProps {
   story: Story;
+  showSaveButton?: boolean;
 }
 
-export const StoryDisplay: React.FC<StoryDisplayProps> = ({ story }) => {
-  const { updateStory } = useStoryStore();
+export const StoryDisplay: React.FC<StoryDisplayProps> = ({ story, showSaveButton = false }) => {
+  const { user } = useAuthStore();
+  const { updateStory, saveStoryToLibrary } = useStoryStore();
   const [isReading, setIsReading] = useState(false);
   const [isFavorite, setIsFavorite] = useState(story.is_favorite);
+  const [isSaved, setIsSaved] = useState(!showSaveButton); // If showSaveButton is false, story is already saved
+  const [isSaving, setIsSaving] = useState(false);
   const audioRef = useRef<SpeechSynthesisUtterance | null>(null);
   
   useEffect(() => {
@@ -23,6 +28,21 @@ export const StoryDisplay: React.FC<StoryDisplayProps> = ({ story }) => {
     const newFavoriteStatus = !isFavorite;
     setIsFavorite(newFavoriteStatus);
     await updateStory(story.id, { is_favorite: newFavoriteStatus });
+  };
+
+  const handleSaveStory = async () => {
+    if (!user || isSaved || isSaving) return;
+    
+    setIsSaving(true);
+    try {
+      await saveStoryToLibrary(story, user.id);
+      setIsSaved(true);
+    } catch (error) {
+      console.error('Error saving story:', error);
+      alert('Failed to save story. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   const shareStory = () => {
@@ -136,6 +156,21 @@ export const StoryDisplay: React.FC<StoryDisplayProps> = ({ story }) => {
       
       <CardFooter className="flex flex-wrap items-center justify-between gap-4 p-6 bg-dark-950/30 border-t border-navy-800/30">
         <div className="flex items-center space-x-3">
+          {/* Save Button - only show if story is not saved yet */}
+          {showSaveButton && user && (
+            <Button
+              variant={isSaved ? "ghost" : "primary"}
+              size="sm"
+              leftIcon={isSaved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+              onClick={handleSaveStory}
+              disabled={isSaved || isSaving}
+              isLoading={isSaving}
+              className={isSaved ? 'text-green-400 hover:text-green-300' : 'bg-gradient-to-r from-navy-600 to-navy-500 hover:from-navy-500 hover:to-navy-400'}
+            >
+              {isSaved ? 'Saved' : isSaving ? 'Saving...' : 'Save Story'}
+            </Button>
+          )}
+
           <Button
             variant="ghost"
             size="sm"

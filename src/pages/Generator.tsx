@@ -13,7 +13,7 @@ import { Crown, Calendar, AlertCircle } from 'lucide-react';
 export const Generator: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { generateNewStory, currentStory } = useStoryStore();
+  const { generateNewStory, currentStory, isCurrentStorySaved } = useStoryStore();
   const { loadUserSubscription, userSubscription } = useSubscriptionStore();
   const [isGenerating, setIsGenerating] = useState(false);
   
@@ -223,7 +223,7 @@ export const Generator: React.FC = () => {
                   </div>
                 )}
               </div>
-              <StoryDisplay story={currentStory} />
+              <StoryDisplay story={currentStory} showSaveButton={!isCurrentStorySaved} />
             </div>
           )}
         </div>
