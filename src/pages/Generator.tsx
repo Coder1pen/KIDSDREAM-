@@ -41,13 +41,17 @@ export const Generator: React.FC = () => {
       const story = await generateNewStory(prompt, user.id, isPremium);
       
       if (story) {
-        // Reload subscription status to get updated count
-        if (user) {
+        // Reload subscription status to get updated count for free users
+        if (user && !isPremium) {
           loadUserSubscription(user.id);
         }
       }
     } catch (error) {
       console.error('Error generating story:', error);
+      // If there was an error, reload the subscription to get the correct count
+      if (user && user.subscription_tier !== 'premium') {
+        loadUserSubscription(user.id);
+      }
     } finally {
       setIsGenerating(false);
     }

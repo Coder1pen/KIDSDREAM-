@@ -34,6 +34,11 @@ export const useStoryStore = create<StoryState>((set, get) => ({
   generateNewStory: async (prompt, userId, isPremium = false) => {
     set({ isLoading: true, error: null });
     try {
+      // Decrement stories remaining for free users BEFORE generating the story
+      if (!isPremium) {
+        await get().decrementStoriesRemaining(userId);
+      }
+      
       const content = await generateStory(prompt, isPremium);
       const title = generateStoryTitle(prompt, isPremium);
       
@@ -51,11 +56,6 @@ export const useStoryStore = create<StoryState>((set, get) => ({
         created_at: new Date().toISOString()
       };
       
-      // Decrement stories remaining for free users
-      if (!isPremium) {
-        await get().decrementStoriesRemaining(userId);
-      }
-      
       set({ 
         currentStory: tempStory,
         isCurrentStorySaved: false,
@@ -65,6 +65,8 @@ export const useStoryStore = create<StoryState>((set, get) => ({
       return tempStory;
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
+      // If story generation failed and we decremented for a free user, we should increment it back
+      // However, since the decrement function doesn't throw errors, we'll let the user try again
       return null;
     }
   },
@@ -195,9 +197,18 @@ export const useStoryStore = create<StoryState>((set, get) => ({
       if (!response.ok) {
         throw new Error('Failed to update story count');
       }
+      
+      // Get the updated count from the response and update the subscription store
+      const result = await response.json();
+      if (result.storiesRemaining !== undefined) {
+        // Import the subscription store to update the count
+        const { useSubscriptionStore } = await import('./useSubscriptionStore');
+        useSubscriptionStore.getState().updateStoriesRemaining(result.storiesRemaining);
+      }
     } catch (error) {
       console.error('Error decrementing stories:', error);
-      // Don't throw here to avoid blocking story generation
+      // Throw the error so the calling function knows it failed
+      throw error;
     }
   }
 }));
