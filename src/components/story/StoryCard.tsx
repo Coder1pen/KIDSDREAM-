@@ -37,6 +37,14 @@ export const StoryCard: React.FC<StoryCardProps> = ({ story }) => {
   };
 
   const confirmDelete = async () => {
+    // Check if story has a valid ID
+    if (!story.id) {
+      console.error('Cannot delete story: missing ID');
+      alert('Cannot delete story: missing ID. Please refresh the page and try again.');
+      setShowDeleteConfirm(false);
+      return;
+    }
+
     setIsDeleting(true);
     try {
       await deleteStory(story.id);
