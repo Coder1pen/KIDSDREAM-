@@ -49,9 +49,6 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
       
       // Fallback to the original API for stories remaining
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/subscription-status?userId=${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
       });
 
       let fallbackData = { tier: 'free', storiesRemaining: 5 };

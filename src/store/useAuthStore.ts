@@ -109,7 +109,29 @@ export const useAuthStore = create<AuthState>((set) => ({
         return;
       }
       
-      const { data: profile } = await getUserProfile(user.id);
+      let { data: profile } = await getUserProfile(user.id);
+      
+      // If profile doesn't exist, create one
+      if (!profile) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            subscription_tier: 'free',
+            stories_generated: 0,
+            stories_remaining: 5
+          });
+        
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          throw new Error('Failed to create user profile');
+        }
+        
+        // Fetch the newly created profile
+        const { data: newProfile } = await getUserProfile(user.id);
+        profile = newProfile;
+      }
       
       set({ 
         user: {
