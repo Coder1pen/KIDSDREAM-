@@ -69,7 +69,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       
       if (profileError) {
         console.error('Error creating profile:', profileError);
-        // Don't throw here as the user account was created successfully
+        // If profile creation fails, sign out the user and throw an error
+        await supabaseSignOut();
+        throw new Error('Failed to create user profile. Please try signing up again.');
       }
       
       set({ 
