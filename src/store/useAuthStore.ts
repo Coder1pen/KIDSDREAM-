@@ -5,7 +5,8 @@ import {
   signUp as supabaseSignUp, 
   signOut as supabaseSignOut,
   getCurrentUser,
-  getUserProfile
+  getUserProfile,
+  supabase
 } from '../lib/supabase';
 
 interface AuthState {
@@ -54,6 +55,22 @@ export const useAuthStore = create<AuthState>((set) => ({
       
       if (error) throw new Error(error.message);
       if (!data.user) throw new Error('No user returned from sign up');
+      
+      // Create profile entry for new user
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          email: data.user.email,
+          subscription_tier: 'free',
+          stories_generated: 0,
+          stories_remaining: 5
+        });
+      
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        // Don't throw here as the user account was created successfully
+      }
       
       set({ 
         user: {
