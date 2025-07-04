@@ -6,6 +6,7 @@ import {
   updateStory as updateStoryInDb,
   deleteStory as deleteStoryFromDb
 } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { generateStory, generateStoryTitle } from '../lib/storyGenerator';
 
 interface StoryState {
@@ -185,17 +186,34 @@ export const useStoryStore = create<StoryState>((set, get) => ({
 
   decrementStoriesRemaining: async (userId) => {
     try {
+      // Get the current user's session to use their access token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.access_token) {
+        throw new Error('User not authenticated');
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/decrement-stories`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ userId }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update story count');
+        // Try to get more detailed error information from the response
+        let errorMessage = 'Failed to update story count';
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          // If we can't parse the error response, use the default message
+        }
+        throw new Error(errorMessage);
       }
       
       // Get the updated count from the response and update the subscription store
