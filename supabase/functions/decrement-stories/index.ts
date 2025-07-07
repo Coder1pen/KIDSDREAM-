@@ -23,6 +23,28 @@ serve(async (req) => {
   }
   
   try {
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing authorization header" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Extract the JWT token
+    const token = authHeader.replace('Bearer ', '');
+    
+    // Verify the user with the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Invalid or expired token" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     // Check if this is a POST request
     if (req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
@@ -32,7 +54,8 @@ serve(async (req) => {
     }
     
     // Parse the request body
-    const { userId } = await req.json();
+    const body = await req.json();
+    const userId = body.userId || user.id; // Use authenticated user's ID if not provided
     
     if (!userId) {
       return new Response(JSON.stringify({ error: "Missing userId" }), {
@@ -41,6 +64,14 @@ serve(async (req) => {
       });
     }
     
+    // Ensure the user can only modify their own profile
+    if (userId !== user.id) {
+      return new Response(JSON.stringify({ error: "Unauthorized: Cannot modify another user's profile" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     // Get current user profile - use maybeSingle() to handle cases where no profile exists
     const { data: profile, error: fetchError } = await supabase
       .from("profiles")
@@ -60,13 +91,31 @@ serve(async (req) => {
     
     // If no profile found, return error as we cannot proceed without a valid profile
     if (!profile) {
-      return new Response(
-        JSON.stringify({ error: "User profile not found" }),
-        {
-          status: 404,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+      // Create a new profile for the user if it doesn't exist
+      const { data: newProfile, error: createError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: userId,
+          email: user.email,
+          subscription_tier: 'free',
+          stories_generated: 0,
+          stories_remaining: 5
+        }, { onConflict: 'id' })
+        .select()
+        .maybeSingle();
+      
+      if (createError || !newProfile) {
+        return new Response(
+          JSON.stringify({ error: `Failed to create user profile: ${createError?.message || 'Unknown error'}` }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      
+      // Use the newly created profile
+      profile = newProfile;
     }
     
     // Don't decrement for premium users

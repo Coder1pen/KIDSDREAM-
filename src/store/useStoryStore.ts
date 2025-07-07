@@ -35,9 +35,14 @@ export const useStoryStore = create<StoryState>((set, get) => ({
   generateNewStory: async (prompt, userId, isPremium = false) => {
     set({ isLoading: true, error: null });
     try {
-      // Decrement stories remaining for free users BEFORE generating the story
+      // Try to decrement stories remaining for free users BEFORE generating the story
       if (!isPremium) {
-        await get().decrementStoriesRemaining(userId);
+        try {
+          await get().decrementStoriesRemaining(userId);
+        } catch (error) {
+          console.error('Failed to decrement stories, but continuing with generation:', error);
+          // Continue with story generation even if decrement fails
+        }
       }
       
       const content = await generateStory(prompt, isPremium);
@@ -66,8 +71,7 @@ export const useStoryStore = create<StoryState>((set, get) => ({
       return tempStory;
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false });
-      // If story generation failed and we decremented for a free user, we should increment it back
-      // However, since the decrement function doesn't throw errors, we'll let the user try again
+      console.error('Story generation failed:', error);
       return null;
     }
   },
@@ -199,19 +203,19 @@ export const useStoryStore = create<StoryState>((set, get) => ({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId: userId }),
       });
 
       if (!response.ok) {
-        // Try to get more detailed error information from the response
-        let errorMessage = 'Failed to update story count';
+        let errorMessage = `HTTP ${response.status}: Failed to update story count`;
         try {
           const errorData = await response.json();
           if (errorData.error) {
             errorMessage = errorData.error;
           }
-        } catch {
-          // If we can't parse the error response, use the default message
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          errorMessage = `HTTP ${response.status}: ${response.statusText || 'Failed to update story count'}`;
         }
         throw new Error(errorMessage);
       }
@@ -225,8 +229,9 @@ export const useStoryStore = create<StoryState>((set, get) => ({
       }
     } catch (error) {
       console.error('Error decrementing stories:', error);
-      // Throw the error so the calling function knows it failed
-      throw error;
+      // Don't throw the error for story generation to continue
+      // Just log it and let the story generation proceed
+      console.warn('Story count decrement failed, but continuing with story generation');
     }
   }
 }));
