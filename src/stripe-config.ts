@@ -10,7 +10,7 @@ export interface Product {
 
 export const products: Product[] = [
   {
-    id: 'prod_SbRZ7BzGo2G1l2',
+    id: 'premium',
     priceId: 'price_1RgEgiCowroJbPwgP7QUmTqK',
     name: 'Premium Plan',
     description: 'One-time purchase for unlimited premium stories',

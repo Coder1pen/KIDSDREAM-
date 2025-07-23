@@ -31,7 +31,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({ tier }) => {
       setIsLoading(true);
       try {
         // Find the corresponding product in stripe-config
-        const product = products.find(p => p.name === tier.name);
+        const product = products.find(p => p.id === tier.id);
         if (product) {
           await createCheckoutSession(product.priceId, product.mode);
         } else {
