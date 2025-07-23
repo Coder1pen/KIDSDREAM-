@@ -43,15 +43,16 @@ Deno.serve(async (req) => {
       return corsResponse({ error: 'Method not allowed' }, 405);
     }
 
-    const { price_id, success_url, cancel_url, mode } = await req.json();
+    const { price_id, success_url, cancel_url, mode, ui_mode } = await req.json();
 
     const error = validateParameters(
-      { price_id, success_url, cancel_url, mode },
+      { price_id, success_url, cancel_url, mode, ui_mode },
       {
         cancel_url: 'string',
         price_id: 'string',
         success_url: 'string',
         mode: { values: ['payment', 'subscription'] },
+        ui_mode: 'string',
       },
     );
 
@@ -178,7 +179,7 @@ Deno.serve(async (req) => {
     }
 
     // create Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    const sessionConfig: any = {
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
@@ -190,11 +191,24 @@ Deno.serve(async (req) => {
       mode,
       success_url,
       cancel_url,
-    });
+    };
 
+    // Add UI mode for embedded checkout
+    if (ui_mode === 'embedded') {
+      sessionConfig.ui_mode = 'embedded';
+      sessionConfig.return_url = success_url;
+      delete sessionConfig.success_url;
+      delete sessionConfig.cancel_url;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig);
     console.log(`Created checkout session ${session.id} for customer ${customerId}`);
 
-    return corsResponse({ sessionId: session.id, url: session.url });
+    return corsResponse({ 
+      sessionId: session.id, 
+      url: session.url,
+      client_secret: session.client_secret 
+    });
   } catch (error: any) {
     console.error(`Checkout error: ${error.message}`);
     return corsResponse({ error: error.message }, 500);
