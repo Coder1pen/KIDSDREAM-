@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.39.6";
 
 // Initialize Supabase client with environment variables
@@ -13,7 +12,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -140,7 +139,7 @@ serve(async (req) => {
       .from("profiles")
       .update({ 
         stories_remaining: newStoriesRemaining,
-        stories_generated: supabase.sql`stories_generated + 1`
+        stories_generated: (profile.stories_generated || 0) + 1
       })
       .eq("id", userId);
     
