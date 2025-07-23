@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js';
+import { EmbeddedCheckoutProvider, EmbeddedCheckout as StripeEmbeddedCheckout } from '@stripe/react-stripe-js';
 import { X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { supabase } from '../../lib/supabase';
@@ -123,7 +123,7 @@ export const EmbeddedCheckout: React.FC<EmbeddedCheckoutProps> = ({
                 stripe={stripePromise}
                 options={{ clientSecret }}
               >
-                <EmbeddedCheckout />
+                <StripeEmbeddedCheckout />
               </EmbeddedCheckoutProvider>
             </div>
           )}
