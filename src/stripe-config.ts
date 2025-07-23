@@ -15,7 +15,7 @@ export const products: Product[] = [
     name: 'Premium Plan',
     description: 'One-time purchase for unlimited premium stories',
     price: 9.99,
-    mode: 'payment',
+    mode: 'subscription',
     features: [
       'Unlimited stories',
       'Advanced story customization',
