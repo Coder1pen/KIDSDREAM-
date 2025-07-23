@@ -88,12 +88,12 @@ export const PaymentSuccess: React.FC = () => {
               {/* Success Message */}
               <h1 className="text-4xl font-bold mb-4">
                 <span className="bg-gradient-to-r from-navy-200 to-navy-100 bg-clip-text text-transparent">
-                  Welcome to Premium!
+                  Premium Unlocked Forever!
                 </span>
               </h1>
               
               <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                Your subscription has been activated successfully. You now have access to unlimited premium stories 
+                Your one-time purchase is complete! You now have lifetime access to unlimited premium stories 
                 with advanced features and enhanced storytelling.
               </p>
 
@@ -101,12 +101,12 @@ export const PaymentSuccess: React.FC = () => {
               <div className="bg-navy-900/30 rounded-xl p-6 mb-8 border border-navy-700/30">
                 <h3 className="text-lg font-semibold text-navy-200 mb-4 flex items-center justify-center">
                   <Crown className="h-5 w-5 mr-2" />
-                  Your Premium Benefits
+                  Your Lifetime Premium Benefits
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-navy-400 rounded-full mr-3"></div>
-                    Unlimited story generation
+                    Unlimited story generation forever
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-navy-400 rounded-full mr-3"></div>
@@ -126,7 +126,7 @@ export const PaymentSuccess: React.FC = () => {
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-navy-400 rounded-full mr-3"></div>
-                    Ad-free experience
+                    Lifetime ad-free experience
                   </div>
                 </div>
               </div>
@@ -139,7 +139,7 @@ export const PaymentSuccess: React.FC = () => {
                   leftIcon={<Sparkles className="h-5 w-5" />}
                   className="bg-gradient-to-r from-navy-600 to-navy-500 hover:from-navy-500 hover:to-navy-400 shadow-glow"
                 >
-                  Create Your First Premium Story
+                  Start Creating Premium Stories
                 </Button>
                 <Button
                   size="lg"
@@ -160,7 +160,7 @@ export const PaymentSuccess: React.FC = () => {
                       <br />
                     </>
                   )}
-                  You can manage your subscription anytime from your profile page.
+                  Your premium access is now active for life. No recurring charges.
                 </p>
               </div>
             </CardContent>

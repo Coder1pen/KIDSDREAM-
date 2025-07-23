@@ -228,7 +228,7 @@ export const Home: React.FC = () => {
                   </span>
                 </h2>
                 <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                  Premium subscribers enjoy stories that are 3x longer, with complex character development, 
+                  Premium users enjoy stories that are 3x longer, with complex character development, 
                   multiple plot layers, and sophisticated narrative techniques that grow with your child.
                 </p>
                 
@@ -247,14 +247,14 @@ export const Home: React.FC = () => {
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-navy-400 rounded-full mr-4"></div>
-                    <span className="text-gray-300">Unlimited story generation</span>
+                    <span className="text-gray-300">Unlimited story generation forever</span>
                   </div>
                 </div>
                 
                 <div className="space-y-4 sm:space-y-0 sm:space-x-6 sm:flex">
                   <Link to="/pricing">
                     <Button size="lg" leftIcon={<Crown className="h-5 w-5" />}>
-                      Upgrade to Premium
+                      Get Premium Forever
                     </Button>
                   </Link>
                   <Link to="/generator">

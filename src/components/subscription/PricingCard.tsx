@@ -83,11 +83,11 @@ export const PricingCard: React.FC<PricingCardProps> = ({ tier }) => {
         </CardTitle>
         <div className="mt-4">
           <span className="text-4xl font-bold text-navy-100">${tier.price}</span>
-          <span className="text-gray-400 ml-2">{isFree ? 'forever' : '/month'}</span>
+          <span className="text-gray-400 ml-2">{isFree ? 'forever' : 'one-time'}</span>
         </div>
         {tier.is_premium && (
           <p className="text-sm text-navy-300 mt-2">
-            Everything in Free, plus premium features
+            One-time purchase - Everything in Free, plus premium features
           </p>
         )}
       </CardHeader>

@@ -13,9 +13,9 @@ export const products: Product[] = [
     id: 'prod_SbRZ7BzGo2G1l2',
     priceId: 'price_1RgEgiCowroJbPwgP7QUmTqK',
     name: 'Premium Plan',
-    description: 'Grant access to all features of the app',
+    description: 'One-time purchase for unlimited premium stories',
     price: 9.99,
-    mode: 'subscription',
+    mode: 'payment',
     features: [
       'Unlimited stories',
       'Advanced story customization',
@@ -23,7 +23,7 @@ export const products: Product[] = [
       'Text-to-speech with multiple voices',
       'Download stories in multiple formats',
       'Ad-free experience',
-      'Early access to new features',
+      'Lifetime access to premium features',
     ],
   },
 ];

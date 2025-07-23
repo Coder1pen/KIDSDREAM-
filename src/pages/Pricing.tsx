@@ -36,7 +36,7 @@ export const Pricing: React.FC = () => {
         'Text-to-speech with multiple voices',
         'Download stories in multiple formats',
         'Ad-free experience',
-        'Early access to new features',
+        'Lifetime access to premium features',
       ],
       stories_per_month: -1, // Unlimited
       is_premium: true,

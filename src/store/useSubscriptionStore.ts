@@ -1,15 +1,14 @@
 import { create } from 'zustand';
 import { SubscriptionTier } from '../types';
 import { getSubscriptionTiers } from '../lib/supabase';
-import { createCheckoutSession, getSubscriptionStatus } from '../lib/stripe';
+import { createCheckoutSession, getUserOrders } from '../lib/stripe';
 
 interface SubscriptionState {
   tiers: SubscriptionTier[];
   userSubscription: {
     tier: 'free' | 'premium';
     storiesRemaining: number;
-    subscriptionStatus?: string;
-    currentPeriodEnd?: number;
+    purchaseStatus?: string;
   };
   isLoading: boolean;
   error: string | null;
@@ -44,8 +43,8 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   loadUserSubscription: async (userId: string) => {
     set({ isLoading: true, error: null });
     try {
-      // First try to get Stripe subscription status
-      const stripeSubscription = await getSubscriptionStatus();
+      // Check for one-time purchase orders instead of subscriptions
+      const userOrders = await getUserOrders();
       
       // Fallback to the original API for stories remaining
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/subscription-status?userId=${userId}`, {
@@ -56,9 +55,13 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         fallbackData = await response.json();
       }
 
-      // Determine subscription tier based on Stripe data
+      // Determine subscription tier based on completed orders
       let tier: 'free' | 'premium' = 'free';
-      if (stripeSubscription?.subscription_status === 'active') {
+      const hasCompletedPremiumOrder = userOrders.some(order => 
+        order.order_status === 'completed' && order.payment_status === 'paid'
+      );
+      
+      if (hasCompletedPremiumOrder) {
         tier = 'premium';
       }
 
@@ -66,8 +69,6 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
         userSubscription: {
           tier,
           storiesRemaining: tier === 'premium' ? -1 : fallbackData.storiesRemaining,
-          subscriptionStatus: stripeSubscription?.subscription_status,
-          currentPeriodEnd: stripeSubscription?.current_period_end,
         },
         isLoading: false 
       });
